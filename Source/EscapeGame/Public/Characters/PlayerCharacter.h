@@ -30,12 +30,19 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		class UInteractionComponent* InteractionComponent;
 
+	/** The location from where the object will be thrown */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Throwing")
+		class USceneComponent* ThrowStartingPoint;
+
 public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		class UInventoryComponent* InventoryComponent;
 
-private:
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwing")
+		float ThrowForce;
 
 protected:
 	virtual void BeginPlay() override;
@@ -49,6 +56,8 @@ protected:
 	void MoveRight(float Value);
 
 	void Interact();
+
+	void ThrowObject();
 
 public:
 

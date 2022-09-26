@@ -54,11 +54,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Item Picker", meta = (ClampMin = 0.1f))
 		float Range;
 
-	//FInteractionData InteractionData;
-
 private:
 
-	AActor* LastActorHit;
+	UPROPERTY()
+		AActor* LastActorHit;
 
 	FVector StartPoint;
 };

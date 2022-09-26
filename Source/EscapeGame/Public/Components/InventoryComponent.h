@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Items/InventoryItem.h"
 #include "InventoryComponent.generated.h"
 
 
@@ -19,7 +20,10 @@ public:
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		TArray<class UItem*> Items;
+		TArray<AInventoryItem*> Items;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		AInventoryItem* SelectedItem;
 
 protected:
 	// Called when the game starts
@@ -30,6 +34,9 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
-		class UItem* AddItem(TSubclassOf<class UItem> ItemClass);
+		AInventoryItem* AddItem(AInventoryItem* NewItem);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FORCEINLINE AInventoryItem* GetSelectedItem() const { return SelectedItem; }
 
 };

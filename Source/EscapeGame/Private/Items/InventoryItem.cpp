@@ -4,6 +4,7 @@
 #include "Items/InventoryItem.h"
 #include "Characters/PlayerCharacter.h"
 #include "Components/InventoryComponent.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values
 AInventoryItem::AInventoryItem()
@@ -11,6 +12,10 @@ AInventoryItem::AInventoryItem()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	BaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BaseMesh"));
+	SetRootComponent(BaseMesh);
+
+	bIsThrowable = false;
 }
 
 // Called when the game starts or when spawned
@@ -27,11 +32,47 @@ void AInventoryItem::Tick(float DeltaTime)
 
 }
 
+void AInventoryItem::OnSelect()
+{
+	OnSelected.Broadcast();
+	bIsSelected = true;
+}
+
+void AInventoryItem::OnUnselect()
+{
+	OnUnselected.Broadcast();
+	bIsSelected = false;
+}
+
+void AInventoryItem::OnDrop()
+{
+	// Play sound
+	bIsSelected = false;
+
+	FVector DropLocation = GetOwner()->GetActorLocation();
+
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	SetActorHiddenInGame(false);
+	SetActorEnableCollision(true);
+
+	//BaseMesh->AddTorqueInRadians(FVector(1, 1, 1) * 4000000);
+}
+
+void AInventoryItem::OnUsePressed_Implementation()
+{
+	// Nothing
+}
+
+void AInventoryItem::OnUseReleased_Implementation()
+{
+	// Nothing
+}
+
 void AInventoryItem::OnInteract_Implementation(class AController* Controller, UActorComponent* Comp)
 {
 	// Add item class to inventory comp
 	APlayerCharacter* Player = Cast<APlayerCharacter>(Controller->GetPawn());
 
-	Player->InventoryComponent->AddItem(ItemClass);
+	Player->InventoryComponent->AddItem(this);
 }
 

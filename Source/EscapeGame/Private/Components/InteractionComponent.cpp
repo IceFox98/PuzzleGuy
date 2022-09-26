@@ -88,9 +88,3 @@ void UInteractionComponent::ChangeRange(float NewRange)
 {
 	Range = NewRange;
 }
-
-//IInteractable* UInteractionComponent::GetInteractiveObject()
-//{
-//	return Cast<AUsableActor>(FindInteractiveObject());
-//}
-

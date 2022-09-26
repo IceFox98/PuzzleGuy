@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Items/EquippableItem.h"
+#include "Items/InventoryItem.h"
 #include "WeaponItem.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ESCAPEGAME_API UWeaponItem : public UEquippableItem
+class ESCAPEGAME_API AWeaponItem : public AActor
 {
 	GENERATED_BODY()
 	

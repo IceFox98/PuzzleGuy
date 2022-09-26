@@ -33,13 +33,22 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 }
 
-UItem* UInventoryComponent::AddItem(TSubclassOf<class UItem> ItemClass)
+AInventoryItem* UInventoryComponent::AddItem(AInventoryItem* NewItem)
 {
-	if (!ItemClass) return nullptr;
-
-	UItem* NewItem = NewObject<UItem>(this, ItemClass);
+	if (!NewItem) return nullptr;
 
 	Items.Add(NewItem);
+
+	// Hide instead of destroy to keep actor data
+	NewItem->SetActorHiddenInGame(true);
+	NewItem->BaseMesh->SetSimulatePhysics(false);
+	NewItem->SetActorEnableCollision(false);
+	NewItem->AttachToActor(GetOwner(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	NewItem->SetOwner(GetOwner());
+	NewItem->SetActorRelativeLocation(FVector::ZeroVector);
+	NewItem->SetActorRelativeRotation(FRotator::ZeroRotator);
+
+	SelectedItem = NewItem;
 
 	return NewItem;
 }

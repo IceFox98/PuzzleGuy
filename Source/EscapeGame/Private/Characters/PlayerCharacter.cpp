@@ -17,12 +17,16 @@ APlayerCharacter::APlayerCharacter()
 	CameraComp->SetupAttachment(RootComponent);
 	CameraComp->bUsePawnControlRotation = true; // Camera does not rotate relative to arm
 
+	ThrowStartingPoint = CreateDefaultSubobject<USceneComponent>(TEXT("ThrowStartingPoint"));
+	ThrowStartingPoint->SetupAttachment(RootComponent);
+
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
 	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
-	//GetMovementComponent()->GetNavAgentPropertiesRef().bCanJump = true;
+	GetMovementComponent()->GetNavAgentPropertiesRef().bCanJump = true;
 
+	ThrowForce = 1200.f;
 }
 
 void APlayerCharacter::BeginPlay()
@@ -41,6 +45,7 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 
 	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &APlayerCharacter::Jump);
 	PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &APlayerCharacter::Interact);
+	PlayerInputComponent->BindAction(TEXT("ThrowObject"), IE_Pressed, this, &APlayerCharacter::ThrowObject);
 
 }
 
@@ -77,6 +82,29 @@ void APlayerCharacter::Interact()
 		{
 			IInteractable* InteractiveObj = Cast<IInteractable>(ObjData.HitActor);
 			InteractiveObj->Execute_OnInteract(ObjData.HitActor, GetController(), ObjData.HitComponent);
+		}
+	}
+}
+
+void APlayerCharacter::ThrowObject()
+{
+	if (InventoryComponent)
+	{
+		AInventoryItem* ActorToThrow = InventoryComponent->GetSelectedItem();
+
+		if (!ActorToThrow || !ThrowStartingPoint) return;
+
+		if (ActorToThrow->IsThrowable())
+		{
+			// Set Object location to throwing point location, before throwing it
+			ActorToThrow->SetActorLocation(ThrowStartingPoint->GetComponentLocation(), false, nullptr, ETeleportType::TeleportPhysics);
+			ActorToThrow->OnDrop();
+
+			ActorToThrow->BaseMesh->SetSimulatePhysics(true);
+			FVector Location;
+			FRotator Rotation;
+			GetActorEyesViewPoint(Location, Rotation);
+			ActorToThrow->BaseMesh->SetAllPhysicsLinearVelocity(Rotation.Vector() * ThrowForce);
 		}
 	}
 }
