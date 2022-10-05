@@ -25,6 +25,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		AInventoryItem* SelectedItem;
 
+	int32 SelectedIndex;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -36,7 +38,23 @@ public:
 	UFUNCTION(BlueprintCallable)
 		AInventoryItem* AddItem(AInventoryItem* NewItem);
 
+	UFUNCTION(BlueprintCallable)
+		void RemoveItem(AInventoryItem* ItemToRemove);
+
+	UFUNCTION(BlueprintCallable)
+		void NextItem();
+
+	UFUNCTION(BlueprintCallable)
+		void PrevItem();
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		FORCEINLINE AInventoryItem* GetSelectedItem() const { return SelectedItem; }
+
+	//UFUNCTION(BlueprintCallable, BlueprintPure)
+		AInventoryItem* DropSelectedItem();
+
+private:
+
+	void SelectItem(int32 Index);
 
 };

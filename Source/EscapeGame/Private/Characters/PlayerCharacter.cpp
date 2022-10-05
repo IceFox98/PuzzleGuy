@@ -88,17 +88,16 @@ void APlayerCharacter::Interact()
 
 void APlayerCharacter::ThrowObject()
 {
-	if (InventoryComponent)
+	if (InventoryComponent && ThrowStartingPoint)
 	{
-		AInventoryItem* ActorToThrow = InventoryComponent->GetSelectedItem();
+		AInventoryItem* ActorToThrow = InventoryComponent->DropSelectedItem();
 
-		if (!ActorToThrow || !ThrowStartingPoint) return;
+		if (!ActorToThrow) return;
 
 		if (ActorToThrow->IsThrowable())
 		{
 			// Set Object location to throwing point location, before throwing it
 			ActorToThrow->SetActorLocation(ThrowStartingPoint->GetComponentLocation(), false, nullptr, ETeleportType::TeleportPhysics);
-			ActorToThrow->OnDrop();
 
 			ActorToThrow->BaseMesh->SetSimulatePhysics(true);
 			FVector Location;

@@ -46,16 +46,12 @@ void AInventoryItem::OnUnselect()
 
 void AInventoryItem::OnDrop()
 {
-	// Play sound
 	bIsSelected = false;
 
-	FVector DropLocation = GetOwner()->GetActorLocation();
+	// Play sound
 
-	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	SetActorHiddenInGame(false);
-	SetActorEnableCollision(true);
+	//FVector DropLocation = GetOwner()->GetActorLocation();
 
-	//BaseMesh->AddTorqueInRadians(FVector(1, 1, 1) * 4000000);
 }
 
 void AInventoryItem::OnUsePressed_Implementation()
