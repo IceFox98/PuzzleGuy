@@ -70,5 +70,6 @@ void AInventoryItem::OnInteract_Implementation(class AController* Controller, UA
 	APlayerCharacter* Player = Cast<APlayerCharacter>(Controller->GetPawn());
 
 	Player->InventoryComponent->AddItem(this);
+	TriggerActors();
 }
 

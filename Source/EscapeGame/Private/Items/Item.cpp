@@ -3,15 +3,7 @@
 
 #include "Items/Item.h"
 
-#define LOCTEXT_NAMESPACE "Item"
-
-UItem::UItem()
+UItem::UItem(const FObjectInitializer& ObjectInitializer)
+	:Super(ObjectInitializer)
 {
-	DisplayName = LOCTEXT("ItemName", "Item");
-	UseActionText = LOCTEXT("ItemUseActionText", "Use");
-}
-
-class UWorld* UItem::GetWorld() const
-{
-	return World;
 }

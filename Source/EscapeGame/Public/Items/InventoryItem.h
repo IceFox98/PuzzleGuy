@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Interactives/ActorTriggerer.h"
 #include "Interactives/Interactable.h"
 #include "InventoryItem.generated.h"
 
@@ -12,7 +12,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUnselected);
 
 
 UCLASS()
-class ESCAPEGAME_API AInventoryItem : public AActor, public IInteractable
+class ESCAPEGAME_API AInventoryItem : public AActorTriggerer, public IInteractable
 {
 	GENERATED_BODY()
 

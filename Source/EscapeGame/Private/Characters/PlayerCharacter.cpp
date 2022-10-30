@@ -7,10 +7,15 @@
 #include "Components/HealthComponent.h"
 #include "Components/InteractionComponent.h"
 #include "Components/InventoryComponent.h"
+#include "AbilitySystem/PuzzleGuyAbilitySystemComponent.h"
+#include "AbilitySystem/Attributes/PuzzleGuyAttributeSet.h"
+#include "AbilitySystem/Abilities/PuzzleGuyGameplayAbility.h"
 
 APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	bAbilitiesInitialized = false;
 
 	// Create a follow camera
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
@@ -22,6 +27,12 @@ APlayerCharacter::APlayerCharacter()
 
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+	AbilitySystemComponent = CreateDefaultSubobject<UPuzzleGuyAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	//AbilitySystemComponent->SetIsReplicated(true);
+	//AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+
+	Attributes = CreateDefaultSubobject<UPuzzleGuyAttributeSet>(TEXT("Attributes"));
+
 
 	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	GetMovementComponent()->GetNavAgentPropertiesRef().bCanJump = true;
@@ -34,32 +45,136 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 }
 
+void APlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// Initializes the GAS Actor on the server
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		AddStartupGameplayAbilities();
+	}
+}
+
+void APlayerCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+
+	if (AbilitySystemComponent && InputComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+		const FGameplayAbilityInputBinds Binds(
+			"Confirm",
+			"Cancel",
+			"EPuzzleGuyAbilityInputID",
+			static_cast<int32>(EPuzzleGuyAbilityInputID::Confirm),
+			static_cast<int32>(EPuzzleGuyAbilityInputID::Cancel)
+		);
+
+		AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, Binds);
+
+	}
+}
+
 void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	check(PlayerInputComponent);
+
+
+	if (AbilitySystemComponent && InputComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+		const FGameplayAbilityInputBinds Binds(
+			"Confirm",
+			"Cancel",
+			"EPuzzleGuyAbilityInputID",
+			static_cast<int32>(EPuzzleGuyAbilityInputID::Confirm),
+			static_cast<int32>(EPuzzleGuyAbilityInputID::Cancel)
+		);
+
+		AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, Binds);
+
+	}
+
 	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &APlayerCharacter::MoveRight);
 
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &APawn::AddControllerPitchInput);
 
-	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &APlayerCharacter::Jump);
+	//PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &APlayerCharacter::Jump);
 	PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &APlayerCharacter::Interact);
 	PlayerInputComponent->BindAction(TEXT("ThrowObject"), IE_Pressed, this, &APlayerCharacter::ThrowObject);
 
 }
 
-void APlayerCharacter::OnHealthChanged(UHealthComponent* OwningHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
+UAbilitySystemComponent* APlayerCharacter::GetAbilitySystemComponent() const
 {
-	Super::OnHealthChanged(OwningHealthComp, Health, HealthDelta, DamageType, InstigatedBy, DamageCauser);
+	return AbilitySystemComponent;
+}
 
-	if (HealthComp->IsDead())
+void APlayerCharacter::AddStartupGameplayAbilities()
+{
+	check(AbilitySystemComponent);
+
+	if (HasAuthority() && !bAbilitiesInitialized)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("You're dead!"));
-		return;
-	}
+		// Grant abilities, but only on the server
 
-	// Do other stuff
+		for (TSubclassOf<UPuzzleGuyGameplayAbility>& StartupAbility : Abilities)
+		{
+			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(
+				StartupAbility,
+				1,
+				static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID),
+				this
+			));
+		}
+
+		// Now apply passives: set default values to Effects
+		for (const TSubclassOf<UGameplayEffect>& GameplayEffect : PassiveGameplayEffects)
+		{
+			FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+			EffectContext.AddSourceObject(this);
+
+			FGameplayEffectSpecHandle NewHandle = AbilitySystemComponent->MakeOutgoingSpec(GameplayEffect, 1, EffectContext);
+
+			if (NewHandle.IsValid())
+			{
+				FActiveGameplayEffectHandle ActiveGameplayEffectHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(
+					*NewHandle.Data.Get(),
+					AbilitySystemComponent
+				);
+			}
+		}
+
+		bAbilitiesInitialized = true;
+	}
+}
+
+//void APlayerCharacter::OnHealthChanged(UHealthComponent* OwningHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
+//{
+//	Super::OnHealthChanged(OwningHealthComp, Health, HealthDelta, DamageType, InstigatedBy, DamageCauser);
+//
+//	if (HealthComp->IsDead())
+//	{
+//		UE_LOG(LogTemp, Warning, TEXT("You're dead!"));
+//		return;
+//	}
+//
+//	// Do other stuff
+//}
+
+void APlayerCharacter::HandleHealthChanged(float DeltaValue, const FGameplayTagContainer& EventTags)
+{
+	if (bAbilitiesInitialized)
+	{
+		OnHealthChanged(DeltaValue, EventTags);
+	}
 }
 
 void APlayerCharacter::MoveForward(float Value)

@@ -6,6 +6,8 @@
 #include "Items/Item.h"
 #include "EquippableItem.generated.h"
 
+class UPuzzleGuyEquipmentInstance;
+
 /**
  * 
  */
@@ -17,7 +19,11 @@ class ESCAPEGAME_API UEquippableItem : public UItem
 public:
 
 	/**The mesh to display for this items pickup*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item")
-		FText HideText;
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
+		TSubclassOf<UPuzzleGuyEquipmentInstance> InstanceType;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
+		//TSubclassOf<FLyraEquipmentActorToSpawn> ActorsToSpawn;
+		TSubclassOf<AActor> ActorsToSpawn;
 
 };
